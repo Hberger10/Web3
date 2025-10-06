@@ -36,8 +36,8 @@ export default class Block {
  */
   isvalid(hashPrevious: string,previousIndex: number): validation {
   if (previousIndex !== this.index-1) return new validation(false,"invalid index."); //verifica indice
-  if (!this.data) new validation(false,"invalid data."); //verificia data
-  if (!this.hashPrevious || this.hashPrevious === "") new validation(false,"invalid HashPrevious .");  // Verifica se hashPrevious é vazio
+  if (!this.data) return new validation(false,"invalid data."); //verificia data  <-- Corrigido!
+  if (!this.hashPrevious || this.hashPrevious === "") return new validation(false,"invalid HashPrevious .");  // Verifica se hashPrevious é vazio <-- Corrigido!
   
   return new validation();
 }

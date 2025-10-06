@@ -40,7 +40,7 @@ describe('Blockchain Class Tests', () => {
     const block1 = new Block(1, chain.getLastBlock().hash, "Block 1 data");
     chain.addBlock(block1);
 
-    expect(chain.isvalid()).toBe(true);  // cobre linhas 34-41
+     expect(chain.isvalid().success).toBe(true);
   });
 
   test('isvalid should return false if a block is invalid', () => { //testando "isvalid" para blockchain invalida
@@ -53,7 +53,7 @@ describe('Blockchain Class Tests', () => {
     const invalidBlock = new Block(2, "", "Block 2 data"); //é colocado um bloco invalido com hashprevious vazio
     chain.blocks.push(invalidBlock);
 
-    expect(chain.isvalid()).toBe(false);  // cobre linhas do for loop e if (!isvalid)
+     expect(chain.isvalid().success).toBe(false);  // cobre linhas do for loop e if (!isvalid)
   });
 
 });
