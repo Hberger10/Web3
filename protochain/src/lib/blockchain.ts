@@ -19,6 +19,12 @@ export default class Blockchain {
     return this.blocks[this.blocks.length - 1];  // Acessa o último bloco da blockchain
   }
 
+
+  getBlock(hash: string): Block | undefined {
+    // Presume que 'this.blocks' é o seu array de blocos.
+    // O método 'find' percorre o array e retorna o primeiro bloco (b) onde b.hash é igual ao hash procurado.
+    return this.blocks.find(b => b.hash === hash);
+}
  addBlock(block: Block): Validation {
   const lastBlock = this.getLastBlock();  // Obtém o último bloco
 
