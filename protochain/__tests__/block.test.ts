@@ -5,14 +5,14 @@ let genesis: Block;
 
 beforeAll(() => {
   // Inicializando o bloco gênesis antes de todos os testes
-  genesis = new Block(0, "genesis", "genesis block data");
+  genesis = new Block(0, "0".repeat(64), "genesis block data");
 });
 
 describe('Block Class Tests', () => {
 
   test('Genesis block should be valid', () => {
     // Para o bloco gênesis, passamos previousIndex = -1 e previousHash fictício
-    const valid = genesis.isvalid("none", -1);
+    const valid = genesis.isvalid("none", -1); 
     expect(valid).toBeTruthy();
   });
 
