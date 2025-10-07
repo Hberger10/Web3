@@ -52,6 +52,6 @@ app.get('/blocks/:indexOrHash', (req, res,next) => {
 // ✅ app.listen() SEMPRE POR ÚLTIMO
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`Blockchain server is running at ${PORT}`);
+        console.log(`Blockchain server is running at a  ${PORT}`);
     });
 }
