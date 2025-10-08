@@ -11,7 +11,7 @@ export default class Blockchain {
 
   constructor() {
     // Adiciona o bloco gênesis à blockchain
-    this.blocks = [new Block(0, "0".repeat(64), "2")]; //inicializa meu array preenchendo ele com um novo bloco com indice 0,
+    this.blocks = [new Block()]; //inicializa meu array preenchendo ele com um novo bloco com indice 0,
     this.nextIndex++;
   }
 

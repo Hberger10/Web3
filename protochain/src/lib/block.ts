@@ -20,12 +20,12 @@ export default class Block { //como se fosse a receita
  * @param hashPrevious the block hashp
  * @param data the block data
  */
-  constructor(index: number,  hashPrevious: string, data: string) {  // instrução de como faze-la. Passo como parametro tudo aquilo que eu vou pegar de fora
-    this.index = index;
-    this.hashPrevious= hashPrevious;
-    this.timestamp=Date.now();
-    this.data=data;
-    this.hash = this.getHash();
+  constructor(block?: Block) {  // instrução de como faze-la. Passo como parametro tudo aquilo que eu vou pegar de fora
+    this.index = block?.index || 0;
+    this.hashPrevious= block?.hashPrevious || "0".repeat(64);
+    this.timestamp=block?.timestamp || Date.now(); //alguns blocos talvez tenha tudo preenchido, outros não, se nãao tiver eu coloco a data atual
+    this.data=block?.data || "";
+    this.hash = block?.hash || this.getHash();
   }
 
   getHash(): string {
