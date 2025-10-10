@@ -16,6 +16,8 @@ describe('Block Class Tests', () => {
     expect(valid).toBeTruthy();
   });
 
+  
+
   test('Should be valid with proper previous hash and index', () => { //aqui estamos testando se o segundo bloco é valido
     // Criando um novo bloco com índice 1 e hashPrevious igual ao hash do bloco gênesis
     // não precisamos passar timestamp e hash, o construtor cuida disso

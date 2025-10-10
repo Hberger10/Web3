@@ -49,9 +49,6 @@ describe('Blockchain Class Tests', () => {
   expect(validation.success).toBe(false);  // Espera que success seja false
   expect(validation.message).toBe("Invalid block: Previous hash is empty.");  // Verifica a mensagem de erro
 });
-
-
-
   test('isvalid should return true for a valid blockchain', () => { //testando "isvalid" para blockchain valida
     const chain = new Blockchain();
 

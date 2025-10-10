@@ -43,11 +43,18 @@ app.get('/blocks/:indexOrHash', (req, res,next) => {
     });
 });
 
-    app.get('/blocks',(req,res,next) =>{
-        if (!req.body.hash)   res.sendStatus(422)  
-            return 
-        const block= new Block()
-    })
+
+    app.post('/blocks', (req, res, next) => {
+  if (req.body.hash=== undefined) return res.sendStatus(422);
+
+  const block = new Block(req.body as Block);
+  const validation = blockchain.addBlock(block);
+
+  if (validation.success)
+    res.status(201).json(block);
+  else
+    res.status(400).json(validation);
+});
 
 // ✅ app.listen() SEMPRE POR ÚLTIMO
 if (require.main === module) {
