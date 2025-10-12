@@ -6,7 +6,10 @@ import Block from '../lib/block';
 const PORT: number = 3000; 
 
 const app = express();
-app.use(morgan('tiny'));
+
+if (process.argv.includes('--run')) {
+    app.use(morgan('tiny'));
+}
 app.use(express.json());
 
 const blockchain = new Blockchain(); //chama o construtor da classe blockchain
@@ -45,20 +48,27 @@ app.get('/blocks/:indexOrHash', (req, res,next) => {
 
 
     app.post('/blocks', (req, res, next) => {
-  if (req.body.hash=== undefined) return res.sendStatus(422);
+  if (req.body.hash=== undefined) return res.sendStatus(422); //feito teste caso não consiga adicionar o bloco/teste feito no blockchainServer.test.ts
 
-  const block = new Block(req.body as Block);
+  const block = new Block(req.body as Block); //cria um novo bloco com os dados que vieram no corpo da requisição/teste feito no blockchainServer.test.ts
   const validation = blockchain.addBlock(block);
 
   if (validation.success)
     res.status(201).json(block);
   else
-    res.status(400).json(validation);
+    res.status(400).json(validation); //próximo passo: fazer o teste que não consegue adicionar o bloco
 });
 
 // ✅ app.listen() SEMPRE POR ÚLTIMO
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Blockchain server is running at a  ${PORT}`);
-    });
+if (process.argv.includes('--run')) {
+    if (require.main === module) {
+        app.listen(PORT, () => {
+            console.log(`Blockchain server is running at a  ${PORT}`);
+        });
+    }
+}
+
+
+export {
+    app
 }
