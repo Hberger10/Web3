@@ -13,6 +13,7 @@ export default class Block {
   hash: string;
   hashPrevious: string;
   data: string;
+  
 /**
  * Creates a new mock block
  * @param block The mock block

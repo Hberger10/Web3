@@ -8,6 +8,7 @@ import Validation from './validation';
 export default class Blockchain {
   blocks: Block[] = [];
   nextIndex: number = 0;
+  static readonly difficulty_factor: number = 5; // Dificuldade padrão para o mock (pode ser ajustada conforme necessário)
 
   constructor() {
     // Adiciona o bloco gênesis à blockchain
@@ -19,6 +20,10 @@ export default class Blockchain {
     return this.blocks[this.blocks.length - 1];  // Acessa o último bloco da blockchain
   }
 
+  getDifficulty(): number {
+        return Math.ceil(this.blocks.length / Blockchain.difficulty_factor);
+    }
+
 
   getBlock(hash: string): Block | undefined {
     // Presume que 'this.blocks' é o seu array de blocos.
@@ -29,7 +34,7 @@ export default class Blockchain {
   const lastBlock = this.getLastBlock();  // Obtém o último bloco
 
   // Chama o método isvalid() e recebe a instância de Validation
-  const validation = block.isvalid(lastBlock.hash, lastBlock.index);
+  const validation = block.isvalid(lastBlock.hash, lastBlock.index,this.getDifficulty());
 
   if (!validation.success) {
     console.log(validation.message);  // Exibe a mensagem de erro no console
@@ -48,7 +53,7 @@ export default class Blockchain {
       const previousBlock = this.blocks[i - 1];  // bloco anterior
 
       // Passa corretamente os parâmetros para o método isvalid
-      const validation = currentBlock.isvalid(previousBlock.hash, previousBlock.index);  // Recebe uma instância de Validation
+      const validation = currentBlock.isvalid(previousBlock.hash, previousBlock.index,this.getDifficulty());  // Recebe uma instância de Validation
 
       if (!validation.success) {
         // Se qualquer bloco for inválido, retorna uma nova instância de Validation com false e a mensagem de erro
@@ -95,7 +100,7 @@ export default class Blockchain {
 // ⚠️ LIMITAÇÕES ATUAIS:
 // - Armazenamento em memória (perde dados ao reiniciar)
 // - Sem persistência em banco de dados
-// - Sem proof-of-work (mineração)
+// - Sem proof-of-work (mineração) //esta sendo adicionado
 // - Sem rede peer-to-peer (descentralização)
 // - Sem sistema de transações
 // - Busca por hash é O(n) (poderia ser O(1) com HashMap)

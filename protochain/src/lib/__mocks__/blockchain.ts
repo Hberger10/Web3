@@ -14,6 +14,7 @@ export default class MockBlockchain {
     // mantemos 'blocks' como a interface pública.
     blocks: Block[] = [];
     nextIndex: number = 1;
+    
 
     constructor() {
         // Inicializa com um bloco gênese simulado
@@ -26,6 +27,8 @@ export default class MockBlockchain {
         // Garantimos que o mock sempre retorna um objeto Block válido
         return this.blocks[this.blocks.length - 1]; 
     }
+
+    
 
     // MOC: Simplesmente retorna uma validação de sucesso sem executar a lógica complexa
     // Isso é útil para testar o caminho de sucesso do servidor (Status 201).
