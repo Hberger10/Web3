@@ -1,5 +1,6 @@
 import Block from './block';
 import Validation from '../validation';
+import BlockInfo from '../blockInfo';
 
 /**
  * Mocked Blockchain class
@@ -53,4 +54,23 @@ export default class MockBlockchain {
         // Simplesmente encontra o bloco na lista de mocks
         return this.blocks.find(b => b.hash === hash);
     }
+
+
+  getFeerPerTx() : number {
+      return 0.01;
+ } // Exemplo fixo, pode ser ajustado conforme necessário
+
+
+  getNextBlock(): BlockInfo {
+    return {
+        index: 1,
+        PreviousHash: this.getLastBlock().hash,
+        difficulty: 0,
+        maxdifficulty: 62,
+        feeperTx: this.getFeerPerTx(),
+        data: new Date().toISOString()
+    };
+    };
 }
+
+      

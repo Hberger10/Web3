@@ -1,5 +1,7 @@
 import { SHA256 } from 'crypto-js'
 import validation from './validation';
+import BlockInfo from './blockInfo';
+
 
 
 
@@ -71,7 +73,20 @@ export default class Block { //como se fosse a receita
   return new validation();
 }
 
+static fromBlockInfo(blockInfo: BlockInfo): Block {
+  const block = new Block;
+  block.index =blockInfo.index;
+  block.hashPrevious=blockInfo.PreviousHash;
+  block.data=blockInfo.data
+  return block;
 }
+
+
+}
+
+
+
+
 
 //RESUMO DA CLASSE BLOCK
 // ============================================================================

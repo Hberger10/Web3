@@ -18,6 +18,14 @@ test('GET /status - Should return status', async () => {
     expect(response.body.isValid).toEqual(true); 
 });
 
+test('GET /nextblock - Should get next block info', async () => {
+    const response = await request(app)
+        .get('/nextblock');
+
+    expect(response.status).toEqual(200);
+    expect(response.body.index).toEqual(1);
+});
+
 test('GET /blocks/:hash - Should get block', async () => {
     const response = await request(app)
         .get('/blocks/abc');

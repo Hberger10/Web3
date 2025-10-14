@@ -1,16 +1,19 @@
+import dotenv, { parse } from 'dotenv';
+dotenv.config();
 import express from 'express';
 import morgan from 'morgan';
 import Blockchain from '../lib/blockchain';
 import Block from '../lib/block';
 
-const PORT: number = 3000; 
+const PORT: number = parseInt(process.env.BLOCKCHAIN_PORT || '3000'); 
 
 const app = express();
-
+/* c8 ignore start */
 if (process.argv.includes('--run')) {
     app.use(morgan('tiny'));
 }
 app.use(express.json());
+/*c8 ignore end */
 
 const blockchain = new Blockchain(); //chama o construtor da classe blockchain
 
@@ -22,6 +25,10 @@ app.get('/status', (req, res,next) => {
         isValid: blockchain.isvalid().success,
         lastBlock: blockchain.getLastBlock()    
     })
+});
+
+app.get('/nextblock', (req, res,next) => {
+    res.json(blockchain.getNextBlock()); 
 });
 
 app.get('/blocks/:indexOrHash', (req, res,next) => {
@@ -58,6 +65,9 @@ app.get('/blocks/:indexOrHash', (req, res,next) => {
   else
     res.status(400).json(validation); //próximo passo: fazer o teste que não consegue adicionar o bloco
 });
+
+
+    
 
 // ✅ app.listen() SEMPRE POR ÚLTIMO
 if (process.argv.includes('--run')) {

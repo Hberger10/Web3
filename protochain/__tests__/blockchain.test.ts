@@ -122,6 +122,12 @@ describe('Blockchain Class Tests', () => {
   });
 });
 
+test ('Should get nextblock info', () => {
+    const blockchain = new Blockchain();
+    const info = blockchain.getNextBlock();
+    expect(info.index).toBe(1);
+});
+
 
 
 

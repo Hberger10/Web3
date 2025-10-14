@@ -1,5 +1,6 @@
 import Block from './block';
 import Validation from './validation';
+import BlockInfo from './blockInfo';
 
 /**
  * Blockchain class
@@ -9,6 +10,7 @@ export default class Blockchain {
   blocks: Block[] = [];
   nextIndex: number = 0;
   static readonly difficulty_factor: number = 5; // Dificuldade padrão para o mock (pode ser ajustada conforme necessário)
+  static readonly MAX_DIFFICULTY: number = 62; // Dificuldade máxima permitida
 
   constructor() {
     // Adiciona o bloco gênesis à blockchain
@@ -62,6 +64,30 @@ export default class Blockchain {
     }
     return new Validation();  // Se todos os blocos forem válidos, retorna sucesso (true)
   }
+
+
+    getFeerPerTx() : number {
+      return 0.01;
+ } // Exemplo fixo, pode ser ajustado conforme necessário
+
+
+  getNextBlock(): BlockInfo {
+  const data = new Date().toISOString();
+  const difficulty = this.getDifficulty();
+  const PreviousHash = this.getLastBlock().hash;
+  const index = this.blocks.length;
+  const feeperTx = this.getFeerPerTx();
+  const maxdifficulty = Blockchain.MAX_DIFFICULTY;
+  return{
+    data,
+    difficulty,
+    PreviousHash,
+    index,
+    feeperTx,
+    maxdifficulty
+  } as BlockInfo
+} // Retorna informações do próximo bloco a ser minerado
+
 }
 
 
