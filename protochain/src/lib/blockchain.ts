@@ -1,6 +1,8 @@
 import Block from './block';
 import Validation from './validation';
 import BlockInfo from './blockInfo';
+import Transaction from './transaction';
+import TransactionType from './transactionType';
 
 /**
  * Blockchain class
@@ -13,8 +15,17 @@ export default class Blockchain {
   static readonly MAX_DIFFICULTY: number = 62; // Dificuldade máxima permitida
 
   constructor() {
-    // Adiciona o bloco gênesis à blockchain
-    this.blocks = [new Block()]; //inicializa meu array preenchendo ele com um novo bloco com indice 0,
+    
+    this.blocks = [new Block({
+        index: this.nextIndex,
+        // Usamos hashPrevious aqui, pois o construtor do Block o espera (mesmo que a imagem mostre 'previousHash')
+        hashPrevious: "0".repeat(64), 
+        
+        transactions: [new Transaction({
+            type: TransactionType.FEE,
+            data: new Date().toString()
+        } as Transaction)]
+    } as Block)]; 
     this.nextIndex++;
   }
 
@@ -36,7 +47,7 @@ export default class Blockchain {
   const lastBlock = this.getLastBlock();  // Obtém o último bloco
 
   // Chama o método isvalid() e recebe a instância de Validation
-  const validation = block.isvalid(lastBlock.hash, lastBlock.index,this.getDifficulty());
+  const validation = block.isValid(lastBlock.hash, lastBlock.index,this.getDifficulty());
 
   if (!validation.success) {
     console.log(validation.message);  // Exibe a mensagem de erro no console
@@ -55,7 +66,7 @@ export default class Blockchain {
       const previousBlock = this.blocks[i - 1];  // bloco anterior
 
       // Passa corretamente os parâmetros para o método isvalid
-      const validation = currentBlock.isvalid(previousBlock.hash, previousBlock.index,this.getDifficulty());  // Recebe uma instância de Validation
+      const validation = currentBlock.isValid(previousBlock.hash, previousBlock.index,this.getDifficulty());  // Recebe uma instância de Validation
 
       if (!validation.success) {
         // Se qualquer bloco for inválido, retorna uma nova instância de Validation com false e a mensagem de erro
@@ -72,14 +83,17 @@ export default class Blockchain {
 
 
   getNextBlock(): BlockInfo {
-  const data = new Date().toISOString();
+    const transactions = [new Transaction({
+        data: new Date().toString()
+    } as Transaction)];
+    
   const difficulty = this.getDifficulty();
   const PreviousHash = this.getLastBlock().hash;
   const index = this.blocks.length;
   const feeperTx = this.getFeerPerTx();
   const maxdifficulty = Blockchain.MAX_DIFFICULTY;
   return{
-    data,
+    transactions,
     difficulty,
     PreviousHash,
     index,

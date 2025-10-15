@@ -1,6 +1,8 @@
 import { SHA256 } from 'crypto-js'
 import validation from './validation';
 import BlockInfo from './blockInfo';
+import Transaction from './transaction';
+import TransactionType from './transactionType';
 
 
 
@@ -14,7 +16,7 @@ export default class Block { //como se fosse a receita
   timestamp: number;
   hash: string;
   hashPrevious: string;
-  data: string;
+  transactions: Transaction[];
   nonce: number; //melhoria futura: adicionar nonce para proof-of-work (mineração) 
   miner: string; //melhoria futura: adicionar miner para identificar quem minerou o bloco
 /**
@@ -28,15 +30,19 @@ export default class Block { //como se fosse a receita
     this.index = block?.index || 0;
     this.hashPrevious= block?.hashPrevious || "0".repeat(64);
     this.timestamp=block?.timestamp || Date.now(); //alguns blocos talvez tenha tudo preenchido, outros não, se nãao tiver eu coloco a data atual
-    this.data=block?.data || "";
+    
+    this.transactions=block?.transactions
+    ? block.transactions.map(tx=> new Transaction(tx)) : [] as Transaction[];
+
     this.nonce = block?.nonce || 0; //melhoria futura: adicionar nonce para proof-of-work (mineração)
     this.miner = block?.miner || "unknown"; //melhoria futura: adicionar miner para identificar quem minerou o bloco
     this.hash = block?.hash || this.getHash();
   }
 
   getHash(): string {
-    return SHA256(this.index + this.timestamp+ this.hashPrevious+ this.data + this.nonce + this.miner).toString();//calcula e retorna tudo isso como string sha256
-  }
+    const txsHashes = this.transactions.map(tx => tx.hash).reduce((a,b) => a + b, ''); //concatena os hashes das transações
+    return SHA256(this.index + this.timestamp + this.hashPrevious + txsHashes + this.nonce + this.miner).toString(); 
+  }//melhoria futura: adicionar nonce e miner no cálculo do hash
 
 /** * Mines the block by finding a valid nonce that produces a hash with the required difficulty
  * @param difficulty The mining difficulty (number of leading zeros required in the hash)
@@ -61,23 +67,37 @@ export default class Block { //como se fosse a receita
  * @param previousIndex The previous block index
  * @param difficulty The mining difficulty (number of leading zeros required in the hash)
  */
-  isvalid(hashPrevious: string,previousIndex: number, difficulty: number): validation {
-  if (previousIndex !== this.index-1) return new validation(false,"invalid index."); //verifica indice e retorna validation 
-  if (!this.data) return new validation(false,"invalid data."); //verifica se tem conteúdo,s nãao tiver retorna validation
-  if (!this.hashPrevious || this.hashPrevious === "" || this.hashPrevious!= hashPrevious) return new validation(false,"invalid HashPrevious .");  // Verifica se hashPrevious é vazio e se alguem alterou as propriedades dos blocos
-  if (!this.nonce || !this.miner) return new validation(false,"invalid nonce or miner."); //melhoria futura: valida nonce e miner
-  
+  isValid(hashPrevious: string, previousIndex: number, difficulty: number): validation {
+    // Lógica para Transações (Adição de recursos/melhoria)
+    if (this.transactions && this.transactions.length) {
+        if (this.transactions.filter(tx => tx.type === TransactionType.FEE).length > 1)
+            return new validation(false, "Too many fees.");
+        
+        const validations = this.transactions.map(tx => tx.isvalid());
+        const errors = validations.filter(v => !v.success).map(v => v.message);
 
-  const prefix = new Array(difficulty + 1).join("0"); //melhoria futura: valida proof-of-work (mineração) com base na dificuldade. Exemplo: dificuldade 3 exige hash começando com "000"
-  if (this.hash !== this.getHash() || !this.hash.startsWith(prefix)) return new validation(false,"invalid hash."); //verifica se o hash bate com o hash calculado
-  return new validation();
+        if (errors.length > 0)
+        return new validation(false, "Invalid block due to invalid tx: " + errors.reduce((a, b) => a + b));
+    }
+
+    // Lógica de Validação do Bloco (similar ao seu código atual)
+    if (previousIndex !== this.index - 1) return new validation(false, "Invalid index.");
+    if (this.timestamp < 1) return new validation(false, "Invalid timestamp."); // Nota: esta linha não está no seu código atual
+    if (this.hashPrevious !== hashPrevious) return new validation(false, "Invalid previous hash.");
+    if (!this.nonce || !this.miner) return new validation(false, "No mined.");
+
+    const prefix = new Array(difficulty + 1).join("0");
+    if (this.hash !== this.getHash() || !this.hash.startsWith(prefix))
+        return new validation(false, "Invalid hash.");
+
+    return new validation();
 }
 
 static fromBlockInfo(blockInfo: BlockInfo): Block {
   const block = new Block;
   block.index =blockInfo.index;
   block.hashPrevious=blockInfo.PreviousHash;
-  block.data=blockInfo.data
+  block.transactions= blockInfo.transactions;
   return block;
 }
 
