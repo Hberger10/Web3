@@ -1,5 +1,7 @@
-
 import validation from '../validation';
+import BlockInfo from '../blockInfo';
+import Transaction from './transaction';
+import TransactionType from '../transactionType';
 
 
 
@@ -7,24 +9,32 @@ import validation from '../validation';
  * Mocked block Class
  */
 //criando uma classe de bloco e exportando ela futuramente para o blockchain
-export default class Block { 
-  index: number;
-  timestamp: number;
-  hash: string;
-  hashPrevious: string;
-  data: string;
+export default class Block {
+    index: number;
+    timestamp: number;
+    hash: string;
+    previousHash: string;
+    transactions: Transaction[];
+    nonce: number;
+    miner: string;  
   
 /**
  * Creates a new mock block
  * @param block The mock block
  */
-  constructor(block?: Block) {  // Passo como parametro tudo aquilo que eu vou pegar de fora
-    this.index = block?.index || 0;
-    this.hashPrevious= block?.hashPrevious || "0".repeat(64);
-    this.timestamp=block?.timestamp || Date.now(); //alguns blocos talvez tenha tudo preenchido, outros não, se não tiver eu coloco a data atual
-    this.data=block?.data || "";
-    this.hash = block?.hash || this.getHash();
-  }
+  constructor(block?: Block) {
+        this.index = block?.index || 0;
+        this.timestamp = block?.timestamp || Date.now();
+        this.previousHash = block?.previousHash || "";
+
+        this.transactions = block?.transactions
+            ? block.transactions.map(tx => new Transaction(tx))
+            : [] as Transaction[];
+
+        this.nonce = block?.nonce || 0;
+        this.miner = block?.miner || "";
+        this.hash = block?.hash || this.getHash();
+    }
 
   getHash(): string {
     return this.hash || "abc";//calcula e retorna tudo isso como string sha256
@@ -37,5 +47,16 @@ export default class Block {
   if (!hashPrevious || previousIndex<0 || this.index<0) return new validation(false,"invalid index or hashPrevious."); 
   return new validation();
 }
+
+mine(difficulty: number, miner: string) {
+        this.miner = miner;
+        const prefix = new Array(difficulty + 1).join("0");
+
+        do {
+            this.nonce++;
+            this.hash = this.getHash();
+        }
+        while (!this.hash.startsWith(prefix));
+    }
 
 }

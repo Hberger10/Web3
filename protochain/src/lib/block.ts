@@ -80,10 +80,10 @@ export default class Block { //como se fosse a receita
         return new validation(false, "Invalid block due to invalid tx: " + errors.reduce((a, b) => a + b));
     }
 
-    // Lógica de Validação do Bloco (similar ao seu código atual)
+    
     if (previousIndex !== this.index - 1) return new validation(false, "Invalid index.");
-    if (this.timestamp < 1) return new validation(false, "Invalid timestamp."); // Nota: esta linha não está no seu código atual
-    if (this.hashPrevious !== hashPrevious) return new validation(false, "Invalid previous hash.");
+    if (this.timestamp < 1) return new validation(false, "Invalid timestamp."); 
+    if (this.hashPrevious !== hashPrevious) return new validation(false, "Invalid HashPrevious.");
     if (!this.nonce || !this.miner) return new validation(false, "No mined.");
 
     const prefix = new Array(difficulty + 1).join("0");

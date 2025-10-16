@@ -1,6 +1,7 @@
 import Block from './block';
 import Validation from '../validation';
 import BlockInfo from '../blockInfo';
+import Transaction from './transaction';
 
 /**
  * Mocked Blockchain class
@@ -68,7 +69,7 @@ export default class MockBlockchain {
         difficulty: 0,
         maxdifficulty: 62,
         feeperTx: this.getFeerPerTx(),
-        data: new Date().toISOString()
+        transactions: [new Transaction()]
     };
     };
 }

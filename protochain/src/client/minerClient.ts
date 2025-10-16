@@ -18,13 +18,13 @@ console.log("miner started with wallet "+ minerWallet.publicKey);
 async function mine() {
     
     console.log("getting next block info...");
-    const {data} = await axios.get(`${API_URL}/nextblock`);
-    const blockInfo: BlockInfo = data as BlockInfo;
+    const {data} = await axios.get(`${API_URL}/nextblock`); //pegando dados do proximo bloco atraves da api
+    const blockInfo: BlockInfo = data as BlockInfo; //converter os dados para o formato BlockInfo
 
-    const newBlock= Block.fromBlockInfo(blockInfo)
+    const newBlock= Block.fromBlockInfo(blockInfo) //cria um novo bloco a partir das informações do bloco
     //todo: adicionar tx de recompensa para o minerador
     console.log("start mining block"+ blockInfo.index)
-    newBlock.mine(blockInfo.difficulty,minerWallet.publicKey)
+    newBlock.mine(blockInfo.difficulty,minerWallet.publicKey) //inicia processo de mineração
 
 
 

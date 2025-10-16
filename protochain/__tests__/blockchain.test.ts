@@ -1,21 +1,15 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect,jest } from '@jest/globals';
 import Blockchain from '../src/lib/blockchain';
-import Block from '../src/lib/block';
-import Validation from '../src/lib/validation'; 
+import Block from '../src/lib/block'; 
+import Transaction from '../src/lib/transaction';
+
+
+jest.mock('../src/lib/transaction');
+jest.mock('../src/lib/block');
 
 // Cria um mock para a classe Block com a lógica simplificada para fins de teste de cobertura
 // Isso é necessário porque o teste 'addBlock should reject invalid block' falha em cadeia.
-const mockBlock = (isValid: boolean, message: string = "") => {
-  return class MockBlock extends Block {
-    constructor(block?: Block) {
-      super(block);
-    }
-    // Sobrescreve o método isvalid para retornar o resultado de validação desejada
-    isvalid(previousHash: string, previousIndex: number): Validation {
-      return new Validation(isValid, message);
-    }
-  };
-};
+
 
 // TROCA: Definição da constante do minerador, usada no mine()
 const MINER_NAME = "TestMiner"; 
@@ -35,7 +29,9 @@ describe('Blockchain Class Tests', () => {
     const block1 = new Block({
         index: 1,
         hashPrevious: previousHash,
-        data: "Test Block for retrieval"
+        transactions: [new Transaction({
+        data: 'Genesis block'
+    } as Transaction)]
     } as Block);
     // TROCA: Mineração obrigatória antes da adição (para que passe no isvalid)
     block1.mine(difficulty, MINER_NAME); 
@@ -65,7 +61,9 @@ describe('Blockchain Class Tests', () => {
     const invalidBlock = new Block({
       index: 1,
       hashPrevious: "", // A falha que queremos testar
-      data: "Block 1 data"
+      transactions: [new Transaction({
+        data: "Block 2 data"
+    } as Transaction)]
     } as Block);
     // TROCA: Minera o bloco. Garantimos que ele passe no PoW e falhe APENAS no HashPrevious.
     invalidBlock.mine(difficulty, MINER_NAME); 
@@ -74,7 +72,7 @@ describe('Blockchain Class Tests', () => {
 
     // Verifica se a validação falhou (Cobre as linhas 35-37 do addBlock)
     expect(validation.success).toBe(false);
-    expect(validation.message).toBe("invalid HashPrevious ."); 
+    expect(validation.message).toBe("Invalid HashPrevious."); 
   });
 
   test('isvalid should return true for the initial chain (Genesis only)', () => {
@@ -93,20 +91,24 @@ describe('Blockchain Class Tests', () => {
     const difficulty = chain.getDifficulty(); 
     const previousHash = chain.getLastBlock().hash;
 
-    const block1 = new Block({
+    const block = new Block({
       index: 1,
       hashPrevious: previousHash,
-      data: "Block 1 data"
+      transactions: [new Transaction({
+        data: 'Genesis block'
+    } as Transaction)]
     } as Block);
     // TROCA: Mineração obrigatória antes da adição.
-    block1.mine(difficulty, MINER_NAME); 
-    chain.addBlock(block1);
+    block.mine(difficulty, MINER_NAME); 
+    chain.addBlock(block);
 
     // Adiciona um bloco inválido forçadamente para que o isvalid() encontre o erro
     const invalidBlock = new Block({
       index: 2,
       hashPrevious: "wrong_hash_to_break_chain", // Força um hashPrevious incorreto
-      data: "Block 2 data"
+      transactions: [new Transaction({
+        data: "Block 2 data"
+    } as Transaction)]
     } as Block); 
     // TROCA: Minera o bloco (garante que ele passe no PoW e falhe no encadeamento)
     invalidBlock.mine(difficulty, MINER_NAME);
@@ -118,7 +120,7 @@ describe('Blockchain Class Tests', () => {
     expect(validation.success).toBe(false); 
     
     // Cobre as linhas 54-56 (retorno de falha no for loop)
-    expect(validation.message).toContain("Invalid block #2: invalid HashPrevious .");
+    expect(validation.message).toContain("Invalid block #2: Invalid HashPrevious.");
   });
 });
 

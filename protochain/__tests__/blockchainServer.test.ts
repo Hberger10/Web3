@@ -5,6 +5,8 @@ import request from 'supertest';
 import {app} from '../src/server/blockchainServer';
 import Block from '../src/lib/block';
 
+import Transaction from '../src/lib/transaction';
+
 jest.mock('../src/lib/block'); 
 
 test('GET /status - Should return status', async () => {
@@ -66,9 +68,12 @@ test('POST /blocks/ - Should NOT add block', async () => {
 test('POST /blocks/ - Should NOT add block(invalid)', async () => {
     // é considerado inválido se o index for negativo ou se o hashPrevious for vazio
     const block = new Block({
-        index: -1,
-        hashPrevious: ''
-    }as Block);
+      index: -1,
+      hashPrevious: "",
+      transactions: [new Transaction({
+        data: 'Genesis block'
+    } as Transaction)]
+    } as Block);
     
     const response = await request(app)
         .post('/blocks')
