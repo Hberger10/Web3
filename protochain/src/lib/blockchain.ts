@@ -7,101 +7,114 @@ import TransactionType from './transactionType';
 /**
  * Blockchain class
  */
-
 export default class Blockchain {
-  blocks: Block[] = [];
-  nextIndex: number = 0;
-  static readonly difficulty_factor: number = 5; // Dificuldade padrão para o mock (pode ser ajustada conforme necessário)
-  static readonly MAX_DIFFICULTY: number = 62; // Dificuldade máxima permitida
+    blocks: Block[];
+    mempool: Transaction[];
+    nextIndex: number = 0;
+    static readonly DIFFICULTY_FACTOR = 5;
+    static readonly MAX_DIFFICULTY = 62;
+    static readonly TX_PER_BLOCK = 2;
 
-  constructor() {
-    
-    this.blocks = [new Block({
-        index: this.nextIndex,
-        // Usamos hashPrevious aqui, pois o construtor do Block o espera (mesmo que a imagem mostre 'previousHash')
-        hashPrevious: "0".repeat(64), 
-        
-        transactions: [new Transaction({
-            type: TransactionType.FEE,
-            data: new Date().toString()
-        } as Transaction)]
-    } as Block)]; 
-    this.nextIndex++;
-  }
+    /**
+     * Creates a new blockchain
+     */
+    constructor() {
+        this.mempool = [];
+        this.blocks = [new Block({
+            index: this.nextIndex,
+            previousHash: "",
+            transactions: [new Transaction({
+                type: TransactionType.FEE,
+                data: new Date().toString()
+            } as Transaction)]
+        } as Block)];
+        this.nextIndex++;
+    }
 
-  getLastBlock(): Block {
-    return this.blocks[this.blocks.length - 1];  // Acessa o último bloco da blockchain
-  }
+    getLastBlock(): Block {
+        return this.blocks[this.blocks.length - 1];
+    }
 
-  getDifficulty(): number {
-        return Math.ceil(this.blocks.length / Blockchain.difficulty_factor);
+    getDifficulty(): number {
+        return Math.ceil(this.blocks.length / Blockchain.DIFFICULTY_FACTOR);
+    }
+
+    addTransaction(transaction: Transaction): Validation {
+        const validation = transaction.isValid();
+        if (!validation.success)
+            return new Validation(false, `Invalid transaction: ${validation.message}`);
+
+        if (this.blocks.some(b => b.transactions.some(tx => tx.hash === transaction.hash))) //verifica se ja tem uma transacao igual em algum bloco
+            
+            return new Validation(false, `Duplicate transaction: ${transaction.hash}`);
+
+        if (this.mempool.some(tx => tx.hash === transaction.hash))
+            return new Validation(false, `Duplicate transaction in mempool: ${transaction.hash}`); //verifica se ja tem uma transacao igual na mempool
+        this.mempool.push(transaction);
+        return new Validation(true, transaction.hash);
+    }
+
+    addBlock(block: Block): Validation {
+        const lastBlock = this.getLastBlock();
+
+        const validation = block.isValid(lastBlock.hash, lastBlock.index, this.getDifficulty());
+        if (!validation.success)
+            return new Validation(false, `Invalid block: ${validation.message}`);
+
+        const txs = block.transactions.filter(tx => tx.type !== TransactionType.FEE).map(tx => tx.hash);//all transactions except fee
+        const newMempool = this.mempool.filter(tx => !txs.includes(tx.hash))//transactions in the mempool that are not in the new block
+        if (newMempool.length + txs.length !== this.mempool.length)
+            return new Validation(false, `Invalid tx in block: mempool`);
+            
+        this.mempool = newMempool;
+
+        this.blocks.push(block);
+        this.nextIndex++;
+
+        return new Validation(true,block.hash);
+
     }
 
 
-  getBlock(hash: string): Block | undefined {
-    // Presume que 'this.blocks' é o seu array de blocos.
-    // O método 'find' percorre o array e retorna o primeiro bloco (b) onde b.hash é igual ao hash procurado.
-    return this.blocks.find(b => b.hash === hash);
-}
- addBlock(block: Block): Validation {
-  const lastBlock = this.getLastBlock();  // Obtém o último bloco
 
-  // Chama o método isvalid() e recebe a instância de Validation
-  const validation = block.isValid(lastBlock.hash, lastBlock.index,this.getDifficulty());
-
-  if (!validation.success) {
-    console.log(validation.message);  // Exibe a mensagem de erro no console
-    return validation;  // Retorna o objeto Validation com sucesso: false
-  }
-
-  this.blocks.push(block);  // Adiciona o bloco à blockchain
-  this.nextIndex++;
-  return new Validation(true);  // Retorna uma instância de Validation com sucesso: true
-}
-
-
-   isvalid(): Validation {  // percorre todos os blocos da nossa blockchain
-    for (let i = this.blocks.length - 1; i > 0; i--) {  // começa do final e vai diminuindo um
-      const currentBlock = this.blocks[i];  // bloco na posição i
-      const previousBlock = this.blocks[i - 1];  // bloco anterior
-
-      // Passa corretamente os parâmetros para o método isvalid
-      const validation = currentBlock.isValid(previousBlock.hash, previousBlock.index,this.getDifficulty());  // Recebe uma instância de Validation
-
-      if (!validation.success) {
-        // Se qualquer bloco for inválido, retorna uma nova instância de Validation com false e a mensagem de erro
-        return new Validation(false, `Invalid block #${currentBlock.index}: ${validation.message}`);
-      }
+    getBlock(hash: string): Block | undefined {
+        return this.blocks.find(b => b.hash === hash);
     }
-    return new Validation();  // Se todos os blocos forem válidos, retorna sucesso (true)
-  }
 
+    isValid(): Validation {
+        for (let i = this.blocks.length - 1; i > 0; i--) {
+            const currentBlock = this.blocks[i];
+            const previousBlock = this.blocks[i - 1];
+            const validation = currentBlock.isValid(previousBlock.hash, previousBlock.index, this.getDifficulty());
+            if (!validation.success)
+                return new Validation(false, `Invalid block #${currentBlock.index}: ${validation.message}`);
+        }
+        return new Validation();
+    }
 
-    getFeerPerTx() : number {
-      return 0.01;
- } // Exemplo fixo, pode ser ajustado conforme necessário
+    getFeePerTx(): number {
+        return 1;
+    }
 
+    getNextBlock(): BlockInfo | null {
+      if (this.mempool.length === 0)
+          return null;
+        const transactions = this.mempool.slice(0, Blockchain.TX_PER_BLOCK);
 
-  getNextBlock(): BlockInfo {
-    const transactions = [new Transaction({
-        data: new Date().toString()
-    } as Transaction)];
-    
-  const difficulty = this.getDifficulty();
-  const PreviousHash = this.getLastBlock().hash;
-  const index = this.blocks.length;
-  const feeperTx = this.getFeerPerTx();
-  const maxdifficulty = Blockchain.MAX_DIFFICULTY;
-  return{
-    transactions,
-    difficulty,
-    PreviousHash,
-    index,
-    feeperTx,
-    maxdifficulty
-  } as BlockInfo
-} // Retorna informações do próximo bloco a ser minerado
-
+        const difficulty = this.getDifficulty();
+        const previousHash = this.getLastBlock().hash;
+        const index = this.blocks.length;
+        const feePerTx = this.getFeePerTx();
+        const maxDifficulty = Blockchain.MAX_DIFFICULTY;
+        return {
+            transactions,
+            difficulty,
+            previousHash,
+            index,
+            feePerTx,
+            maxDifficulty
+        } as BlockInfo;
+    }
 }
 
 

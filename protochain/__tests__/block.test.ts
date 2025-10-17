@@ -1,138 +1,172 @@
-import { describe, test, expect, beforeAll,jest } from '@jest/globals';
+import { describe, test, expect, beforeAll, jest } from '@jest/globals';
 import Block from '../src/lib/block';
 import BlockInfo from '../src/lib/blockInfo';
 import Transaction from '../src/lib/transaction';
+import TransactionType from '../src/lib/transactionType';
 
-// TROCA: Definição de constantes de mineração para uso global nos testes
-const GLOBAL_DIFFICULTY = 1; // Dificuldade baixa para mineração rápida
-const GLOBAL_MINER = "GenesisMiner"; 
+jest.mock('../src/lib/transaction');
 
-let genesis: Block;
-jest.mock('../src/lib/transaction'); // Mock da classe Transaction para controle total nos testes
+describe("Block tests", () => {
 
-beforeAll(() => {
-  // Inicializando o bloco gênesis
-  genesis = new Block({
-    transactions: [new Transaction({
-        data: 'Genesis block'
-    } as Transaction)]
-} as Block);
-  
-  // TROCA CRUCIAL: Minerar o Bloco Gênese para que ele seja considerado válido
-  genesis.mine(GLOBAL_DIFFICULTY, GLOBAL_MINER); 
-});
+    const exampleDifficulty = 0;
+    const exampleMiner = "luiz";
+    let genesis: Block;
 
-describe('Block Class Tests', () => {
+    beforeAll(() => {
+        genesis = new Block({
+            transactions: [new Transaction({
+                data: 'Genesis block'
+            } as Transaction)]
+        } as Block);
+    })
 
-  const exampleDifficulty = GLOBAL_DIFFICULTY; // Usa a dificuldade minerada no Gênese
-  const exampleMiner = "miner1"; 
+    test('Should be valid', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)]
+        } as Block);
+        block.mine(exampleDifficulty, exampleMiner);
 
-  test('Genesis block should be valid', () => {
-    // O Gênese foi minerado no beforeAll. O teste agora deve passar.
-    const valid = genesis.isValid("0".repeat(64), -1, exampleDifficulty); 
-    expect(valid.success).toBe(true); 
-  });
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeTruthy();
+    })
 
+    test('Should create from block info', () => {
+        const block = Block.fromBlockInfo({
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)],
+            difficulty: exampleDifficulty,
+            feePerTx: 1,
+            index: 1,
+            maxDifficulty: 62,
+            previousHash: genesis.hash
+        } as BlockInfo)
+        block.mine(exampleDifficulty, exampleMiner);
 
- // Assumindo que você tem 'genesis' (bloco 0) e 'exampleDifficulty' e 'exampleMiner' definidos no escopo do seu teste.
-test('Should be valid BlockInfo,()', () => {
-    
-    const block = Block.fromBlockInfo({
-        index: 1,
-        difficulty: exampleDifficulty,
-        transactions: [new Transaction({
-        data: 'Genesis block'
-    } as Transaction)],
-        maxdifficulty: 62,
-        PreviousHash: genesis.hash,
-        feeperTx: 0.01,
-        
-    } as BlockInfo);
-    
-    block.mine(exampleDifficulty, exampleMiner);
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeTruthy();
+    })
 
+    test('Should NOT be valid (2 FEE)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [
+                new Transaction({
+                    type: TransactionType.FEE,
+                    data: 'fee1'
+                } as Transaction),
+                new Transaction({
+                    type: TransactionType.FEE,
+                    data: 'fee2'
+                } as Transaction)
+            ]
+        } as Block);
+        block.mine(exampleDifficulty, exampleMiner);
 
-    const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
-    expect(valid.success).toBe(true);
-});
+    test('Should NOT be valid (invalid tx)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction()]
+        } as Block);
+        block.mine(exampleDifficulty, exampleMiner);
 
-  test('Should be valid with proper previous hash and index', () => { 
-    const block = new Block({index: 1, hashPrevious: genesis.hash, transactions: [new Transaction({
-        data: 'Genesis block'
-    } as Transaction)]} as Block);
-    
-    // TROCA CRUCIAL: Minerar o Bloco 1 antes de validar
-    block.mine(exampleDifficulty,exampleMiner); 
-    
-    const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
-    console.log(valid.message);
-    expect(valid.success).toBe(true); 
-  });
-  
-  // NOVO TESTE: Valida o erro de sequência de índice (Cobre a validação: previousIndex !== this.index-1)
-  test('Should NOT be valid (invalid index sequence)', () => { 
-    // Criando um bloco com index 3, mas o anterior tem index 0. (3 != 0 + 1)
-    const block = new Block({index: 3, hashPrevious: genesis.hash, transactions: [new Transaction({
-        data: 'Block 3 data'
-    } as Transaction)]} as Block);
-    const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
-    expect(valid.success).toBe(false);
-    expect(valid.message).toBe("Invalid index.");
-  });
-  
-  // NOVO TESTE: Valida o erro de hash mismatch (Cobre a validação: this.hashPrevious != hashPrevious)
-  test('Should NOT be valid (hash mismatch)', () => { 
-    // Criando um bloco que aponta para um hash falso ("wrong_hash")
-    const block = new Block({index: 1, hashPrevious: "wrong_hash", transactions: [new Transaction({
-        data: 'Block 2 data'
-    } as Transaction)]} as Block);
-    // TROCA: Minerar antes de validar (para que a falha NÃO seja no PoW)
-    block.mine(exampleDifficulty, exampleMiner);
-    const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
-    expect(valid.success).toBeFalsy();
-    expect(valid.message).toBe("Invalid HashPrevious.");
-  });
+    test('Should NOT be valid (fallbacks)', () => {
+        const block = new Block();
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
+    test('Should NOT be valid (previous hash)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: "abc",
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)]
+        } as Block);
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
-  test('Should NOT be valid (empty hashPrevious)', () => {
-    // O construtor define hashPrevious como "". A validação deve capturar isso.
-    const block = new Block({index: 1, hashPrevious: "", transactions: [new Transaction({
-        data: 'Block 2 data'
-    } as Transaction)]} as Block);
-    // TROCA: Minerar antes de validar
-    block.mine(exampleDifficulty, exampleMiner);
-    const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
-    expect(valid.success).toBeFalsy();
-    // A mensagem de erro em block.ts é "invalid HashPrevious ."
-    expect(valid.message).toBe("Invalid HashPrevious."); 
-  });
+    test('Should NOT be valid (timestamp)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)]
+        } as Block);
+        block.timestamp = -1;
+        block.hash = block.getHash();
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
-  test('Should NOT be valid (negative index)', () => {
-    const block = new Block({index: -1, hashPrevious: "abc", transactions: [new Transaction({
-        data: "abcd"
-    } as Transaction)]} as Block);
-    // Não precisa minerar, pois o índice é a prioridade de falha
-    const valid = block.isValid(genesis.hashPrevious, genesis.index, exampleDifficulty);
-    expect(valid.success).toBeFalsy();
-    expect(valid.message).toBe("Invalid index.");
-  });
+    test('Should NOT be valid (empty hash)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)]
+        } as Block);
+        block.mine(exampleDifficulty, exampleMiner);
 
-  test('Should NOT be valid (empty data)', () => {
-    const block = new Block({index: 1, hashPrevious: "abc", transactions: [new Transaction({
-        data: ""
-    } as Transaction)]} as Block);
-    // Não precisa minerar
-    const valid = block.isValid(genesis.hashPrevious, genesis.index, exampleDifficulty);
-    expect(valid.success).toBeFalsy();
-    
-  });
+        block.hash = "";
 
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
-});
+    test('Should NOT be valid (no mined)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)]
+        } as Block);
 
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
+    test('Should NOT be valid (data)', () => {
+        const block = new Block({
+            index: 1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction({
+                data: ''
+            } as Transaction)]
+        } as Block);
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
+    test('Should NOT be valid (index)', () => {
+        const block = new Block({
+            index: -1,
+            previousHash: genesis.hash,
+            transactions: [new Transaction({
+                data: 'block 2'
+            } as Transaction)]
+        } as Block);
+        const valid = block.isValid(genesis.hash, genesis.index, exampleDifficulty);
+        expect(valid.success).toBeFalsy();
+    })
 
-
+})

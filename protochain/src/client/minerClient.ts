@@ -1,51 +1,47 @@
 import dotenv from 'dotenv';
 dotenv.config();
+
 import axios from 'axios';
+import Block from '../lib/block';
 import BlockInfo from '../lib/blockInfo';
 
-import Block from '../lib/block'
+const BLOCKCHAIN_SERVER = process.env.BLOCKCHAIN_SERVER;
 
-const API_URL = process.env.BLOCKCHAIN_SERVER || 'http://localhost:3000';
-const minerWallet={
-    privateKey: "12346",
+const minerWallet = {
+    privateKey: "123456",
     publicKey: `${process.env.MINER_WALLET}`
 }
+console.log("Logged as " + minerWallet.publicKey);
 
-let totalMined =0;
-console.log("miner started with wallet "+ minerWallet.publicKey);
-
+let totalMined = 0;
 
 async function mine() {
-    
-    console.log("getting next block info...");
-    const {data} = await axios.get(`${API_URL}/nextblock`); //pegando dados do proximo bloco atraves da api
-    const blockInfo: BlockInfo = data as BlockInfo; //converter os dados para o formato BlockInfo
+    console.log("Getting next block info...");
+    const { data } = await axios.get(`${BLOCKCHAIN_SERVER}blocks/next`);
+    const blockInfo = data as BlockInfo;
 
-    const newBlock= Block.fromBlockInfo(blockInfo) //cria um novo bloco a partir das informações do bloco
-    //todo: adicionar tx de recompensa para o minerador
-    console.log("start mining block"+ blockInfo.index)
-    newBlock.mine(blockInfo.difficulty,minerWallet.publicKey) //inicia processo de mineração
+    const newBlock = Block.fromBlockInfo(blockInfo);
 
+    //TODO: adicionar tx de recompensa
 
+    console.log("Start mining block #" + blockInfo.index);
+    newBlock.mine(blockInfo.difficulty, minerWallet.publicKey);
 
-    console.log(blockInfo);
+    console.log("Block mined! Sending to blockchain...");
 
-    try{
-        await axios.post(`${API_URL}/blocks`,newBlock);
-        console.log("block added successfully");
+    try {
+        await axios.post(`${BLOCKCHAIN_SERVER}blocks/`, newBlock);
+        console.log("Block sent and accepted!");
         totalMined++;
-        console.log("Total blocks mined by this miner: "+ totalMined);
+        console.log("Total mined blocks: " + totalMined);
+    }
+    catch (err: any) {
+        console.error(err.response ? err.response.data : err.message);
     }
 
-
-    catch(err:any){
-    console.error(err.response ? err.response.data : err.message);
-
-
-}
-
-
-setTimeout(mine,1000);
+    setTimeout(() => {
+        mine();
+    }, 1000)
 }
 
 mine();

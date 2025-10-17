@@ -2,76 +2,69 @@ import Block from './block';
 import Validation from '../validation';
 import BlockInfo from '../blockInfo';
 import Transaction from './transaction';
+import TransactionType from '../transactionType';
 
 /**
  * Mocked Blockchain class
- *
- * Esta classe simula o comportamento da Blockchain real, mas com lógica simples
- * e previsível, ideal para testes de integração (como o servidor Express).
  */
-export default class MockBlockchain {
-    // A propriedade blocks é pública e deve ser acessível para simular o estado da cadeia.
-    // Inicializamos com um mock de bloco gênese.
-    // Usamos um array privado para simular o armazenamento, se necessário, mas 
-    // mantemos 'blocks' como a interface pública.
-    blocks: Block[] = [];
-    nextIndex: number = 1;
-    
+export default class Blockchain {
+    blocks: Block[];
+    nextIndex: number = 0;
 
+    /**
+     * Creates a new mocked blockchain
+     */
     constructor() {
-        // Inicializa com um bloco gênese simulado
-        // A sintaxe new Block() aqui irá chamar o CONSTRUTOR MOCKADO do Block.
-        this.blocks = [new Block()]; 
-    }
-
-    // MOC: Retorna sempre o bloco gênese simulado.
-    getLastBlock(): Block {
-        // Garantimos que o mock sempre retorna um objeto Block válido
-        return this.blocks[this.blocks.length - 1]; 
-    }
-
-    
-
-    // MOC: Simplesmente retorna uma validação de sucesso sem executar a lógica complexa
-    // Isso é útil para testar o caminho de sucesso do servidor (Status 201).
-    addBlock(block: Block): Validation {
-        // Opcionalmente, pode-se adicionar o bloco para simular o crescimento da cadeia no mock
-        this.blocks.push(block); 
+        this.blocks = [new Block({
+            index: 0,
+            hash: 'abc',
+            previousHash: "",
+            transactions: [new Transaction({
+                data: 'tx1',
+                type: TransactionType.FEE
+            } as Transaction)],
+            timestamp: Date.now()
+        } as Block)];
         this.nextIndex++;
-        return new Validation(true, "");
     }
 
-
-    // MOC: Retorna sempre uma validação de sucesso.
-    // Útil para o endpoint /status (isValid: true).
-    isvalid(): Validation { 
-        return new Validation(true, "Mocked chain is valid.");
+    getLastBlock(): Block {
+        return this.blocks[this.blocks.length - 1];
     }
-    
-    // MOC: Testa se o getBlock foi chamado.
-    // Retorna um bloco real para um hash conhecido (para testar o caminho de sucesso do servidor)
-    // e undefined para qualquer outro hash (para testar o caminho 404).
+
+    addBlock(block: Block): Validation {
+        if (block.index < 0) return new Validation(false, "Invalid mock block.");
+
+        this.blocks.push(block);
+        this.nextIndex++;
+
+        return new Validation();
+    }
+
     getBlock(hash: string): Block | undefined {
-        // Simplesmente encontra o bloco na lista de mocks
         return this.blocks.find(b => b.hash === hash);
     }
 
+    isValid(): Validation {
+        return new Validation();
+    }
 
-  getFeerPerTx() : number {
-      return 0.01;
- } // Exemplo fixo, pode ser ajustado conforme necessário
+    getFeePerTx(): number {
+        return 1;
+    }
 
-
-  getNextBlock(): BlockInfo {
-    return {
-        index: 1,
-        PreviousHash: this.getLastBlock().hash,
-        difficulty: 0,
-        maxdifficulty: 62,
-        feeperTx: this.getFeerPerTx(),
-        transactions: [new Transaction()]
-    };
-    };
+    getNextBlock(): BlockInfo {
+        return {
+            transactions: [new Transaction({
+                data: new Date().toString()
+            } as Transaction)],
+            difficulty: 0,
+            previousHash: this.getLastBlock().hash,
+            index: 1,
+            feePerTx: this.getFeePerTx(),
+            maxDifficulty: 62
+        } as BlockInfo;
+    }
 }
 
       

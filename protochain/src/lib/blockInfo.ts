@@ -1,14 +1,13 @@
-/**
- * The BlockInfo interface defines the structure for block metadata used in the blockchain.
- */
-
 import Transaction from "./transaction";
 
+/**
+ * The BlockInfo interface
+ */
 export default interface BlockInfo {
     index: number;
-    PreviousHash: string;
+    previousHash: string;
     difficulty: number;
-    maxdifficulty: number;
-    feeperTx: number;
+    maxDifficulty: number;
+    feePerTx: number;
     transactions: Transaction[];
 }
