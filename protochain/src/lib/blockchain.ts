@@ -3,6 +3,7 @@ import Validation from './validation';
 import BlockInfo from './blockInfo';
 import Transaction from './transaction';
 import TransactionType from './transactionType';
+import TransactionSearch from './transactionSearch';
 
 /**
  * Blockchain class
@@ -79,6 +80,29 @@ export default class Blockchain {
 
     getBlock(hash: string): Block | undefined {
         return this.blocks.find(b => b.hash === hash);
+    }
+
+    getTransaction(hash: string): TransactionSearch  {
+        const mempoolIndex = this.mempool.findIndex(t => t.hash === hash);
+        if (mempoolIndex !== -1)
+            return {
+                transaction: this.mempool[mempoolIndex],
+                mempoolIndex: mempoolIndex,
+                blockIndex: -1
+            } as TransactionSearch;
+
+        const blockIndex = this.blocks.findIndex(b => b.transactions.some(tx => tx.hash === hash));
+        if (blockIndex !== -1) {
+            const block = this.blocks[blockIndex];
+            const transaction = block.transactions.find(tx => tx.hash === hash)!;
+            return {
+                transaction: transaction,
+                mempoolIndex: -1,
+                blockIndex: blockIndex
+            } as TransactionSearch;
+        }
+
+        return {blockIndex: -1, mempoolIndex: -1, transaction: null as any} as TransactionSearch;
     }
 
     isValid(): Validation {
