@@ -5,7 +5,8 @@
     "start": "node ./dist/blockchain.js",
     "test": "jest",
     "blockchain": "ts-node ./src/server/blockchainServer.ts --run",
-    "mine": "ts-node ./src/client/minerClient.ts"
+    "mine": "ts-node ./src/client/minerClient.ts",
+    "wallet": "ts-node ./src/client/walletClient.ts"
   },
   "keywords": [],
   "author": "",
@@ -28,7 +29,9 @@
     "axios": "^1.12.2",
     "crypto-js": "^4.2.0",
     "dotenv": "^17.2.3",
+    "ecpair": "^3.0.0",
     "express": "^5.1.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "tiny-secp256k1": "^2.2.4"
   }
 }
