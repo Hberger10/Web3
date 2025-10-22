@@ -2,12 +2,13 @@ import request from 'supertest';
 import { describe, test, expect, jest } from '@jest/globals';
 import { app } from '../src/server/blockchainServer';
 import Block from '../src/lib/block';
-import TransactionType from '../src/lib/transactionType';
 import Transaction from '../src/lib/transaction';
-import transaction from '../src/lib/transaction';
+import TransactionInput from '../src/lib/transactionInput';
 
 jest.mock('../src/lib/block');
 jest.mock('../src/lib/blockchain');
+jest.mock('../src/lib/transaction');
+jest.mock('../src/lib/transactionInput');
 
 describe('BlockchainServer Tests', () => {
     test('GET /status - Should return status', async () => {
@@ -80,7 +81,7 @@ describe('BlockchainServer Tests', () => {
         expect(response.status).toEqual(400);
     })
 
-    test('GET /transactions/:hash - Should get transactions', async () => {
+    test('GET /transactions/:hash - Should get transaction', async () => {
         const response = await request(app)
             .get('/transactions/abc');
 
@@ -88,16 +89,16 @@ describe('BlockchainServer Tests', () => {
         expect(response.body.mempoolIndex).toEqual(0);
     })
 
-    test('POST /transactions/ - Should add transaction', async () => {
+    test('POST /transactions/ - Should add tx', async () => {
         const tx = new Transaction({
-            data: 'tx1'
+            txInput: new TransactionInput(),
+            to: 'carteiraTo'
         } as Transaction);
+
         const response = await request(app)
             .post('/transactions/')
             .send(tx);
-
-        expect(response.status).toEqual(201);
         
+        expect(response.status).toEqual(201);
     })
 })
-

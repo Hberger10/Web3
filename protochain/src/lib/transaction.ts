@@ -10,19 +10,20 @@ export default class Transaction {
     type: TransactionType;
     timestamp: number;
     hash: string;
-    txInput: TransactionInput;
+    txInput: TransactionInput | undefined;
     to: string;
 
     constructor(tx?: Transaction) {
         this.type = tx?.type || TransactionType.REGULAR;
         this.timestamp = tx?.timestamp || Date.now();
         this.to = tx?.to || "";
+        this.txInput=tx?.txInput ? new TransactionInput(tx?.txInput): new TransactionInput();
         this.hash = tx?.hash || this.getHash();
-        this.txInput = new TransactionInput(tx?.txInput) || new TransactionInput(); 
     }
 
     getHash(): string {
-        return sha256(this.type + this.txInput.getHash() + this.to + this.timestamp).toString();
+        const from = this.txInput? this.txInput.getHash(): "";
+        return sha256(this.type + from + this.to + this.timestamp).toString();
     }
 
     isValid(): Validation {
@@ -31,6 +32,12 @@ export default class Transaction {
 
         if (!this.to)
             return new Validation(false, "Invalid recipient address.");
+
+        if (this.txInput){
+            const validation=this.txInput.isValid();
+            if(!validation.success)
+                return new Validation(false,validation.message)
+        }
 
         return new Validation();
     }

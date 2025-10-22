@@ -1,51 +1,61 @@
 import * as ecc from 'tiny-secp256k1';
 import ECPairFactory from 'ecpair';
-import { Buffer } from 'buffer';
-import  sha256  from 'crypto-js/sha256';
+import sha256 from 'crypto-js/sha256';
 import Validation from './validation';
 
 const ECPair = ECPairFactory(ecc);
 
 /**
- * Transaction input class
+ * TransactionInput class
  */
-
 export default class TransactionInput {
-    fromAdress: string;
+    fromAddress: string;
     amount: number;
     signature: string;
 
-    constructor(txInput?:TransactionInput) {
-        this.fromAdress = txInput?.fromAdress || "";
-        this.amount=txInput?.amount || 0 ;
-        this.signature=txInput?.signature || "";
-
+    /**
+     * Creates a new TransactionInput
+     * @param txInput The tx input data
+     */
+    constructor(txInput?: TransactionInput) {
+        this.fromAddress = txInput?.fromAddress || "";
+        this.amount = txInput?.amount || 0;
+        this.signature = txInput?.signature || "";
     }
 
+    /**
+     * Generates the tx input signature
+     * @param privateKey The 'from' private key
+     */
     sign(privateKey: string): void {
         const hashToSign = Buffer.from(this.getHash(), "hex");
         const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
         this.signature = Buffer.from(keyPair.sign(hashToSign)).toString("hex");
     }
 
+    /**
+     * Generates the tx input hash
+     * @returns The tx input hash
+     */
     getHash(): string {
-        return sha256(this.fromAdress + this.amount ).toString();
+        return sha256(this.fromAddress + this.amount).toString();
     }
 
+    /**
+     * Validates if the tx input is ok
+     * @returns Returns a validation result object
+     */
     isValid(): Validation {
-        if (!this.signature || this.signature.length === 0) {
-            return new Validation(false, "No signature in this transaction input.");
-        }
+        if (!this.signature)
+            return new Validation(false, "Signature is required.");
 
-        if (this.amount <1)
-            return new Validation(false, "Amount must be than zero");
+        if (this.amount < 1)
+            return new Validation(false, "Amount must be greater than zero.");
 
-        const hash= Buffer.from(this.getHash(),"hex");
-        const isValid= ECPair.fromPublicKey(Buffer.from(this.fromAdress,"hex"))
-            .verify(hash,Buffer.from(this.signature,"hex"))
+        const hash = Buffer.from(this.getHash(), "hex");
+        const isValid = ECPair.fromPublicKey(Buffer.from(this.fromAddress, "hex"))
+            .verify(hash, Buffer.from(this.signature, "hex"));
 
-        return isValid? new Validation(): new Validation(false,"invalid tx input")
-        
-
+        return isValid ? new Validation() : new Validation(false, "Invalid tx input signature.");
     }
 }
