@@ -1,4 +1,117 @@
-import Wallet from '../lib/wallet';
+import dotenv from 'dotenv'
+dotenv.config();
 
-const wallet = new Wallet('325b66256d087967b42d7af7ed7fe8aa0a026e1b72caf4f5da15671e328734a3');
-console.log (wallet)
+import axios from 'axios'
+import Wallet from '../lib/wallet';
+import readline from 'readline'
+
+
+const BLOCKCHAIN_SERVER= process.env.BLOCKCHAIN_SERVER
+
+let myWalletPub ="";
+let myWalletPriv = "";
+
+
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+})
+
+function menu() {
+    setTimeout(() => {
+        console.clear();
+
+        if (myWalletPub)
+            console.log(`You are logged as ${myWalletPub}`);
+        else
+            console.log(`You aren't logged.`);
+
+    console.log("1 - Create Wallet");
+    console.log("2 - Recover Wallet");
+    console.log("3 - Balance");
+    console.log("4 - Send tx");
+    console.log("5 - LogOut");
+    rl.question("Choose your option: ", (answer) => {
+        switch(answer){
+            case "1": createWallet();break;
+            case "2": recoverWallet();break;
+            case "3": getBalance();break;
+            case "4": sendTx();break;
+            case "5": logOut();break;
+
+            default :{
+                console.log("Wrong option!")
+                menu();
+            }
+        }
+
+})
+    }, 1000)
+}
+
+function preMenu(){
+    rl.question("Press any key for continue",()=>{
+        menu()
+    })
+}
+
+function createWallet(){
+    console.clear();
+    const wallet = new Wallet();
+    console.log("Your new Wallet is")
+    console.log(wallet)
+    myWalletPub = wallet.publicKey
+    myWalletPriv=wallet.privateKey
+    preMenu();
+
+
+}   
+
+function recoverWallet(){
+    console.clear(); 
+    rl.question("What is your privateKey or wif",(wifOrPrivateKey)=>{
+         const wallet = new Wallet(wifOrPrivateKey);
+        console.log("Your recovered Wallet is")
+        console.log(wallet)
+        myWalletPub = wallet.publicKey
+        myWalletPriv=wallet.privateKey
+        preMenu();
+    })   
+
+
+}
+
+function getBalance() {
+    console.clear();
+
+    if (!myWalletPub) {
+        console.log('You don\'t have a wallet yet.');
+        return preMenu();
+    }
+
+    //TODO: get balance via API
+    preMenu();
+}
+
+function sendTx() {
+    console.clear();
+
+    if (!myWalletPub) {
+        console.log('You don\'t have a wallet yet.');
+        return preMenu();
+    }
+
+    //TODO: get tx via API
+    preMenu();
+}
+
+function logOut(){
+    console.clear();
+    console.log("Your Wallet is logged Out")
+    myWalletPub ="";
+    myWalletPriv="";
+    preMenu();
+}
+
+
+menu();
