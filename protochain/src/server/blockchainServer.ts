@@ -59,16 +59,21 @@ app.post('/blocks', (req: Request, res: Response, next: NextFunction) => {
         res.status(400).json(validation);
 })
 
-app.get('/transactions/:hash?', (req: Request, res: Response, next: NextFunction) => {
+// Em src/server/blockchainServer.ts
 
-    if (req.params.hash)
+// 1. Rota para buscar UMA transação pelo HASH
+app.get('/transactions{/:hash}', (req, res, next) => {
+    if (req.params.hash) {
+        // Lógica para quando o hash EXISTE
         res.json(blockchain.getTransaction(req.params.hash));
-    else
+    } else {
+        // Lógica para quando o hash NÃO EXISTE
         res.json({
             next: blockchain.mempool.slice(0, Blockchain.TX_PER_BLOCK),
             total: blockchain.mempool.length
         });
-})
+    }
+});
 
 app.post('/transactions', (req: Request, res: Response, next: NextFunction) => {
     if (req.body.hash === undefined) return res.sendStatus(422);

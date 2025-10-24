@@ -8,12 +8,12 @@ import Validation from '../validation';
  */
 
 export default class TransactionInput {
-    fromAdress: string;
+    fromAddress: string;
     amount: number;
     signature: string;
 
     constructor(txInput?:TransactionInput) {
-        this.fromAdress = txInput?.fromAdress || "carteira 1 ";
+        this.fromAddress = txInput?.fromAddress || "carteira 1 ";
         this.amount=txInput?.amount || 10 ;
         this.signature=txInput?.signature || "abc";
 
