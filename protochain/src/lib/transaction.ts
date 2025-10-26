@@ -17,7 +17,11 @@ export default class Transaction {
         this.type = tx?.type || TransactionType.REGULAR;
         this.timestamp = tx?.timestamp || Date.now();
         this.to = tx?.to || "";
-        this.txInput=tx?.txInput ? new TransactionInput(tx?.txInput): new TransactionInput();
+        if (tx && tx.txInput)
+            this.txInput = new TransactionInput(tx.txInput);
+        else
+            this.txInput = undefined;
+
         this.hash = tx?.hash || this.getHash();
     }
 
