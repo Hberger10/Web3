@@ -77,9 +77,28 @@ describe("Blockchain tests", () => {
         } as Transaction);
 
         const validation = blockchain.addTransaction(tx);
-        
-
         expect(validation.success).toEqual(true);
+    })
+
+    test('Should NOT add transaction (Pending Tx)', () => {
+        const blockchain = new Blockchain();
+        const tx = new Transaction({
+            txInput:new TransactionInput(),
+            hash: 'somehashvalue'
+
+        } as Transaction);
+
+        blockchain.addTransaction(tx);
+
+
+        const tx1 = new Transaction({
+            txInput:new TransactionInput(),
+            hash: 'somehashvalueDiferent'
+
+        } as Transaction);
+
+        const validation1 = blockchain.addTransaction(tx1);
+        expect(validation1.success).toBeFalsy();
     })
 
     test('Should NOT add transaction (duplicate hash)', () => {

@@ -7,7 +7,7 @@ import Wallet from '../lib/wallet';
 import Transaction from '../lib/transaction';
 import TransactionType from '../lib/transactionType';
 import TransactionInput from '../lib/transactionInput';
-
+    
 
 const BLOCKCHAIN_SERVER= process.env.BLOCKCHAIN_SERVER
 
@@ -34,6 +34,7 @@ function menu() {
     console.log("3 - Balance");
     console.log("4 - Send tx");
     console.log("5 - LogOut");
+    console.log("6 - SearchTx")
     rl.question("Choose your option: ", (answer) => {
         switch(answer){
             case "1": createWallet();break;
@@ -41,6 +42,7 @@ function menu() {
             case "3": getBalance();break;
             case "4": sendTx();break;
             case "5": logOut();break;
+            case "6": SearchTx();break;
 
             default :{
                 console.log("Wrong option!")
@@ -162,6 +164,16 @@ function logOut(){
     myWalletPub ="";
     myWalletPriv="";
     preMenu();
+}
+
+
+function SearchTx(){
+    console.clear();
+    rl.question("Your tx hash",async (hash)=> {
+        const response= await axios.get(`${BLOCKCHAIN_SERVER}transactions/${hash}`);
+        console.log(response.data)
+        preMenu();
+    })
 }
 
 
