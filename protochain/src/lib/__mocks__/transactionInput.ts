@@ -11,8 +11,10 @@ export default class TransactionInput {
     fromAddress: string;
     amount: number;
     signature: string;
+    previousTx: string;
 
     constructor(txInput?:TransactionInput) {
+        this.previousTx=txInput?.previousTx || "xyz"
         this.fromAddress = txInput?.fromAddress || "carteira 1 ";
         this.amount=txInput?.amount || 10 ;
         this.signature=txInput?.signature || "abc";
@@ -28,9 +30,8 @@ export default class TransactionInput {
     }
 
     isValid(): Validation {
-        if (!this.signature || this.signature.length === 0) {
-            return new Validation(false, "No signature in this transaction input.");
-        }
+        if (!this.previousTx &&!this.signature)
+            return new Validation(false, "Signature and previous TX are required.");
 
         if (this.amount <1)
             return new Validation(false, "Amount must be than zero");
