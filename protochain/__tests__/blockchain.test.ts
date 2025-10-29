@@ -7,6 +7,7 @@ import blockchain from '../src/lib/blockchain';
 import TransactionInput from '../src/lib/transactionInput';
 import Wallet from '../src/lib/wallet';
 import TransactionOutput from '../src/lib/transactionOutput';
+import TransactionType from '../src/lib/transactionType';
 
 jest.mock('../src/lib/block');
 jest.mock('../src/lib/transaction');
@@ -236,6 +237,23 @@ describe("Blockchain tests", () => {
         console.log(result.message);
         expect(result.success).toEqual(true);
     })
+    test('Should NOT  add block(invalid mempool)', () => {
+        const blockchain = new Blockchain(alice.publicKey);
+        blockchain.mempool.push(new Transaction())
+        blockchain.mempool.push(new Transaction())
+        const tx = new Transaction({
+            txInputs:[new TransactionInput()],
+        } as Transaction);
+        
+        blockchain.addTransaction(tx);
+        const result = blockchain.addBlock(new Block({
+            index: 1,
+            previousHash: blockchain.blocks[0].hash,
+            transactions: [tx]
+        } as Block));
+        console.log(result.message);
+        expect(result.success).toBeFalsy();
+    }) 
 
     test('Should get block', () => {
         const blockchain = new Blockchain(alice.publicKey);
@@ -243,15 +261,25 @@ describe("Blockchain tests", () => {
         expect(block).toBeTruthy();
     })
 
-    test('Should NOT add block', () => {
+    test('Should NOT add block(invalid index)', () => {
+
         const blockchain = new Blockchain(alice.publicKey);
+        blockchain.mempool.push(new Transaction());
         const block = new Block({
             index: -1,
             previousHash: blockchain.blocks[0].hash,
-            transactions: [new Transaction({
-                txInputs:[new TransactionInput()],
-            } as Transaction)]
+            
         } as Block)
+
+        block.transactions.push(new Transaction({
+            type: TransactionType.FEE,
+            txOutputs: [new TransactionOutput({
+                toAddress:alice.publicKey,
+                amount: 1
+            }as TransactionOutput)]
+        }as Transaction))
+        block.hash=block.getHash()
+
         const result = blockchain.addBlock(block);
         expect(result.success).toEqual(false);
     })
