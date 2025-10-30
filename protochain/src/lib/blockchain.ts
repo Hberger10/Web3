@@ -5,6 +5,7 @@ import Transaction from './transaction';
 import TransactionType from './transactionType';
 import TransactionSearch from './transactionSearch';
 import TransactionOutput from './transactionOutput';
+import TransactionInput from './transactionInput';
 
 /**
  * Blockchain class
@@ -59,20 +60,27 @@ export default class Blockchain {
     }
 
     addTransaction(transaction: Transaction): Validation {
-        if(transaction.txInputs && transaction.txInputs.length){
-            const from= transaction.txInputs[0].fromAddress;
+        if (transaction.txInputs && transaction.txInputs.length) {
+            const from = transaction.txInputs[0].fromAddress;
+
             const pendingTx = this.mempool
-            .filter(tx=>tx.txInputs && tx.txInputs.length)
-            .map(tx=> tx.txInputs)
-            .flat()
-            .filter(txi=>txi!.fromAddress===from)
+                .filter(tx => tx.txInputs && tx.txInputs.length)
+                .map(tx => tx.txInputs)
+                .flat()
+                .filter(txi => txi!.fromAddress === from);
 
             if (pendingTx && pendingTx.length)
-                return new Validation(false,"This wallet has a pending transaction")
+                return new Validation(false, `This wallet has a pending transaction.`);
 
-            //TODO: Validar origem dos fundos(utxo)
-
+            const utxo = this.getUtxo(from);
+            for (let i = 0; i < transaction.txInputs.length; i++) {
+                const txi = transaction.txInputs[i];
+                if (utxo.findIndex(txo => txo.tx === txi.previousTx && txo.amount >= txi.amount) === -1)
+                    return new Validation(false, `Invalid tx: the TXO is already spent or unexistent`);
+            }
         }
+
+        //fazer versão final que valida as taxas
 
         const validation = transaction.isValid();
         if (!validation.success)
@@ -85,6 +93,8 @@ export default class Blockchain {
         
         this.mempool.push(transaction);
         return new Validation(true, transaction.hash);
+
+        
     }
 
     addBlock(block: Block): Validation {
@@ -176,6 +186,49 @@ export default class Blockchain {
             maxDifficulty
         } as BlockInfo;
     }
+
+    getTxInputs(wallet: string): TransactionInput[] {
+    return this.blocks
+        .map(b => b.transactions)
+        .flat()
+        .filter(tx => tx.txInputs && tx.txInputs.length)
+        .map(tx => tx.txInputs)
+        .flat()
+        .filter((txi): txi is TransactionInput => txi !== undefined && txi.fromAddress === wallet)
+}
+
+getTxOutputs(wallet: string): TransactionOutput[] {
+    return this.blocks
+        .map(b => b.transactions)
+        .flat()
+        .filter(tx => tx.txOutputs && tx.txOutputs.length)
+        .map(tx => tx.txOutputs)
+        .flat()
+        .filter((txo): txo is TransactionOutput => txo !== undefined && txo.toAddress === wallet)
+}
+
+getUtxo(wallet: string): TransactionOutput[] {
+    const txIns = this.getTxInputs(wallet);
+    const txOuts = this.getTxOutputs(wallet);
+
+    if (!txIns || !txIns.length) return txOuts;
+
+    txIns.forEach(txi => {
+        const index = txOuts.findIndex(txo => txo.amount === txi.amount);
+        if (index !== -1) {
+            txOuts.splice(index, 1);
+        }
+    })
+
+    return txOuts;
+}
+
+getBalance(wallet: string): number {
+    const utxo = this.getUtxo(wallet);
+    if (!utxo || !utxo.length) return 0;
+
+    return utxo.reduce((a, b) => a + b.amount, 0);
+}
 }
 
 
