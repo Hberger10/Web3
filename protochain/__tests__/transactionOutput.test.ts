@@ -15,48 +15,38 @@ describe("TransactionOutput tests", () => {
         const txOutput = new TransactionOutput({
             amount: 10,
             toAddress: alice.publicKey,
-            tx:"abc"
+            tx: "abc"
         } as TransactionOutput)
-        
 
         const valid = txOutput.isValid();
         expect(valid.success).toBeTruthy();
     })
 
-    test('Should be valid', () => {
-        const txOutput = new TransactionOutput({
-            amount: 10,
-            toAddress: alice.publicKey,
-            tx:"abc"
-        } as TransactionOutput)
-        
-
+    test('Should NOT be valid (default)', () => {
+        const txOutput = new TransactionOutput();
         const valid = txOutput.isValid();
-        expect(valid.success).toBeTruthy();
+        expect(valid.success).toBeFalsy();
     })
 
     test('Should NOT be valid', () => {
         const txOutput = new TransactionOutput({
             amount: -10,
             toAddress: alice.publicKey,
-            tx:"abc"
+            tx: "abc"
         } as TransactionOutput)
-        
 
         const valid = txOutput.isValid();
         expect(valid.success).toBeFalsy();
     })
 
-    test('Should get hash valid', () => {
+    test('Should get hash', () => {
         const txOutput = new TransactionOutput({
             amount: 10,
             toAddress: alice.publicKey,
-            tx:"abc"
+            tx: "abc"
         } as TransactionOutput)
-        
 
         const hash = txOutput.getHash();
         expect(hash).toBeTruthy();
     })
-
 })

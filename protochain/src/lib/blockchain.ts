@@ -203,20 +203,19 @@ getTxOutputs(wallet: string): TransactionOutput[] {
 }
 
 getUtxo(wallet: string): TransactionOutput[] {
-    const txIns = this.getTxInputs(wallet);
-    const txOuts = this.getTxOutputs(wallet);
+        const txIns = this.getTxInputs(wallet);
+        const txOuts = this.getTxOutputs(wallet);
 
-    if (!txIns || !txIns.length) return txOuts;
+        if (!txIns || !txIns.length) return txOuts;
 
-    txIns.forEach(txi => {
-        const index = txOuts.findIndex(txo => txo.amount === txi.amount);
-        if (index !== -1) {
+        txIns.forEach(txi => {
+            // Versão mais robusta (não está no seu código, é uma sugestão)
+            const index = txOuts.findIndex(txo => txo.tx === txi.previousTx);
             txOuts.splice(index, 1);
-        }
-    })
+        })
 
-    return txOuts;
-}
+        return txOuts;
+    }
 
 getBalance(wallet: string): number {
     const utxo = this.getUtxo(wallet);
